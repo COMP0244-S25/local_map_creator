@@ -12,38 +12,40 @@ class LocalMapCreatorNode(Node):
     def __init__(self):
         super().__init__('local_map_creator_node')
         
-        # Modified parameters
+        # Parameters
         self.min_distance = 0.3
         self.max_distance = 3.0
-        self.angle_bins = 180    # Reduced to 2-degree bins
-        self.max_angle_diff = np.radians(15)  # Increased angle tolerance
-        self.max_point_distance = 0.2  # Increased distance tolerance
+        self.angle_bins = 180
+        self.max_angle_diff = np.radians(15)
+        self.max_point_distance = 0.2
         self.min_points_per_bin = 5
         
-        # Create subscriber for point cloud
+        # Subscriber for point cloud
         self.subscription = self.create_subscription(
             PointCloud2,
             'mid360_PointCloud2',
             self.point_cloud_callback,
             10)
         
-        # Create publishers for visualization
+        # Publishers for visualization
         self.points_pub = self.create_publisher(Marker, 'local_map_points', 10)
         self.lines_pub = self.create_publisher(Marker, 'local_map_lines', 10)
-        
+
         self.get_logger().info('Local map creator node initialized')
+
     def filter_and_bin_points(self, points):
         """Filter points by distance and bin them by angle"""
         angle_bins = [[] for _ in range(self.angle_bins)]
         bin_size = 2 * np.pi / self.angle_bins
         
         for point in points:
-            x, y, z = point
+            # Extract x, y. We ignore z as we are creating a 2D map
+            x, y, _ = point
             distance = np.sqrt(x*x + y*y)
             
             if self.min_distance < distance < self.max_distance:
                 angle = np.arctan2(y, x)
-                # Ensure angle is in [0, 2π]
+
                 if angle < 0:
                     angle += 2 * np.pi
                     
@@ -51,7 +53,7 @@ class LocalMapCreatorNode(Node):
                 if bin_idx == self.angle_bins:
                     bin_idx = 0
                     
-                angle_bins[bin_idx].append([x, y, distance])  # Also store distance
+                angle_bins[bin_idx].append([x, y, distance])
         
         return angle_bins
 
@@ -82,7 +84,9 @@ class LocalMapCreatorNode(Node):
         return np.array(averaged_points), np.array(bin_indices)
 
     def create_line_segments(self, points, bin_indices):
-        """Create line segments between nearby points with improved robustness"""
+        """Create line segments between nearby points"""
+    ## Recommend removing this for tutorial
+    # --------------------------------------------------#
         if len(points) < 2:
             return []
             
@@ -110,9 +114,11 @@ class LocalMapCreatorNode(Node):
             else:
                 # End current segment if it has at least 2 points
                 if len(current_segment) >= 2:
-                    # Add additional check for minimum segment length
+                    # Check for minimum segment length
                     segment_length = np.linalg.norm(current_segment[-1] - current_segment[0])
-                    if segment_length > 0.3:  # Minimum segment length of 30cm
+
+                    # Add segment if it is longer than 30cm (we are assuming walls are at least 30cm wide)
+                    if segment_length > 0.3:
                         segments.append(current_segment)
                 current_segment = []
         
@@ -121,7 +127,7 @@ class LocalMapCreatorNode(Node):
             segment_length = np.linalg.norm(current_segment[-1] - current_segment[0])
             if segment_length > 0.3:
                 segments.append(current_segment)
-            
+        # -------------------------------------------------- #
         return segments
 
     def publish_visualization(self, points, segments):
@@ -160,7 +166,6 @@ class LocalMapCreatorNode(Node):
         line_marker.color.a = 1.0
         
         # Create separate line strips for each segment
-        markers = MarkerArray()
         for i, segment in enumerate(segments):
             line_marker = Marker()
             line_marker.header.frame_id = "base_link"
@@ -188,7 +193,7 @@ class LocalMapCreatorNode(Node):
         for p in point_cloud2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True):
             points.append([p[0], p[1], p[2]])
             
-        if len(points) < 10:  # Minimum number of points needed
+        if len(points) < 10:
             return
             
         # Process points
