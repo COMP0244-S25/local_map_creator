@@ -133,7 +133,7 @@ class LocalMapCreatorNode(Node):
     def publish_visualization(self, points, segments):
         # Publish points
         point_marker = Marker()
-        point_marker.header.frame_id = "base_link"
+        point_marker.header.frame_id = "livox"
         point_marker.header.stamp = self.get_clock().now().to_msg()
         point_marker.type = Marker.POINTS
         point_marker.action = Marker.ADD
@@ -155,7 +155,7 @@ class LocalMapCreatorNode(Node):
         
         # Publish line segments
         line_marker = Marker()
-        line_marker.header.frame_id = "base_link"
+        line_marker.header.frame_id = "livox"
         line_marker.header.stamp = self.get_clock().now().to_msg()
         line_marker.type = Marker.LINE_STRIP
         line_marker.action = Marker.ADD
@@ -168,7 +168,7 @@ class LocalMapCreatorNode(Node):
         # Create separate line strips for each segment
         for i, segment in enumerate(segments):
             line_marker = Marker()
-            line_marker.header.frame_id = "base_link"
+            line_marker.header.frame_id = "livox"
             line_marker.header.stamp = self.get_clock().now().to_msg()
             line_marker.type = Marker.LINE_STRIP
             line_marker.action = Marker.ADD
