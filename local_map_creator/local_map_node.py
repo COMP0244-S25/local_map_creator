@@ -13,13 +13,12 @@ class LocalMapCreatorNode(Node):
         super().__init__('local_map_creator_node')
         
         # Parameters
-        # TBD: find the correct params for the line detection to work
-        self.min_distance = 0.1
-        self.max_distance = 1.0
-        self.angle_bins = 100
-        self.max_angle_diff = np.radians(45)
-        self.max_point_distance = 0.1
-        self.min_points_per_bin = 1
+        self.min_distance = 0.3
+        self.max_distance = 3.0
+        self.angle_bins = 180
+        self.max_angle_diff = np.radians(15)
+        self.max_point_distance = 0.2
+        self.min_points_per_bin = 5
         
         # Subscriber for point cloud
         self.subscription = self.create_subscription(
@@ -134,7 +133,7 @@ class LocalMapCreatorNode(Node):
     def publish_visualization(self, points, segments):
         # Publish points
         point_marker = Marker()
-        point_marker.header.frame_id = "base_link"
+        point_marker.header.frame_id = "livox"
         point_marker.header.stamp = self.get_clock().now().to_msg()
         point_marker.type = Marker.POINTS
         point_marker.action = Marker.ADD
@@ -156,7 +155,7 @@ class LocalMapCreatorNode(Node):
         
         # Publish line segments
         line_marker = Marker()
-        line_marker.header.frame_id = "base_link"
+        line_marker.header.frame_id = "livox"
         line_marker.header.stamp = self.get_clock().now().to_msg()
         line_marker.type = Marker.LINE_STRIP
         line_marker.action = Marker.ADD
@@ -169,7 +168,7 @@ class LocalMapCreatorNode(Node):
         # Create separate line strips for each segment
         for i, segment in enumerate(segments):
             line_marker = Marker()
-            line_marker.header.frame_id = "base_link"
+            line_marker.header.frame_id = "livox"
             line_marker.header.stamp = self.get_clock().now().to_msg()
             line_marker.type = Marker.LINE_STRIP
             line_marker.action = Marker.ADD
